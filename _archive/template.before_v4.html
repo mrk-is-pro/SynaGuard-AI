@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SyncGuard AI: sync monitoring for any dataset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script>window.__errs=[];addEventListener('error',e=>window.__errs.push(e.message));</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--ink:#2B2340;--mut:#5E5677;--line:#E7E1EE;--bg:#FBF8F4;--vio:#6A47E8;--vio2:#7C5CFC;--btn:linear-gradient(120deg,#E5522F,#B03AD8 55%,#6A47E8);
+--hex:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zm0 34L0 84V50m56 0v34L28 100' fill='none' stroke='black' stroke-width='1.3'/%3E%3Ccircle cx='28' cy='66' r='2.2'/%3E%3Ccircle cx='0' cy='50' r='2.2'/%3E%3Ccircle cx='56' cy='50' r='2.2'/%3E%3C/svg%3E");
+color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}html{scroll-padding-top:90px}
+body{margin:0;font-family:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:60}
+/* wallpaper: vibrant mesh gradient + hex-network pattern painted in a gradient */
+.wall{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
+.mesh{position:absolute;inset:-8%;transition:opacity 1s ease;background:radial-gradient(38% 34% at 10% 6%,rgba(124,92,252,.42),transparent 70%),radial-gradient(34% 32% at 94% 4%,rgba(255,122,89,.40),transparent 70%),radial-gradient(40% 40% at 88% 94%,rgba(18,165,148,.36),transparent 70%),radial-gradient(34% 34% at 6% 90%,rgba(62,155,233,.36),transparent 70%)}
+.mesh.bad{opacity:0;background:radial-gradient(38% 34% at 10% 6%,rgba(229,72,77,.38),transparent 70%),radial-gradient(34% 32% at 94% 4%,rgba(255,150,60,.42),transparent 70%),radial-gradient(40% 40% at 88% 94%,rgba(242,106,75,.34),transparent 70%),radial-gradient(34% 34% at 6% 90%,rgba(176,58,216,.30),transparent 70%)}
+body[data-state=bad] .mesh.bad{opacity:1}
+.pat{position:absolute;inset:0;opacity:.55;background:linear-gradient(115deg,#F26A4B,#E5484D 18%,#B03AD8 40%,#6A47E8 58%,#3E9BE9 78%,#12A594);-webkit-mask-image:var(--hex),linear-gradient(165deg,#000 0%,rgba(0,0,0,.12) 42%,#000 100%);-webkit-mask-size:56px 100px,100% 100%;-webkit-mask-repeat:repeat,no-repeat;-webkit-mask-composite:source-in;mask-image:var(--hex),linear-gradient(165deg,#000 0%,rgba(0,0,0,.12) 42%,#000 100%);mask-size:56px 100px,100% 100%;mask-repeat:repeat,no-repeat;mask-composite:intersect}
+a{color:inherit}:focus-visible{outline:3px solid var(--vio2);outline-offset:2px;border-radius:8px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;z-index:70}.skip:focus{left:12px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 4vw;background:rgba(251,248,244,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(231,225,238,.9)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;margin-right:6px}
+#tabs{display:flex;gap:4px;flex:1;overflow-x:auto}
+#tabs button{border:0;background:none;font:600 .93rem inherit;font-family:inherit;color:var(--mut);padding:0 14px;min-height:44px;border-radius:12px;cursor:pointer;white-space:nowrap}
+#tabs button:hover{background:rgba(255,255,255,.7)}#tabs button[aria-selected=true]{color:#fff;background:var(--btn);box-shadow:0 10px 20px -12px #B03AD8}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;min-height:40px;border-radius:999px;background:#fff;border:1px solid var(--line);font:600 .82rem inherit;font-family:inherit;color:var(--ink);cursor:pointer}
+.chip i{width:8px;height:8px;border-radius:50%;background:#12A594}
+main{max-width:1200px;margin:0 auto;padding:22px 4vw 60px}
+.view[hidden]{display:none}.view{animation:fade .25s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}
+h1{font-size:clamp(2.1rem,4.6vw,3.5rem);line-height:1.04;letter-spacing:-.03em;margin:0 0 14px;font-weight:800}h2{font-size:1.08rem;margin:0 0 12px;font-weight:800}h2 .note{font-weight:500;margin-left:6px}
+.eyebrow{font-weight:800;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase}
+.lead{font-size:1.1rem;max-width:30em;margin:0 0 18px}
+.card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 16px 36px -26px rgba(43,35,64,.55)}
+/* hero */
+.heroband{position:relative;overflow:hidden;border-radius:30px;padding:30px;margin-bottom:22px;color:#fff;background:linear-gradient(120deg,#FF7A59 0%,#E5484D 24%,#B03AD8 55%,#6A47E8 78%,#3E9BE9 100%);box-shadow:0 30px 60px -34px #6A47E8;display:grid;gap:26px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start}
+.heroband::before{content:"";position:absolute;inset:0;background:#fff;opacity:.26;pointer-events:none;-webkit-mask-image:var(--hex),linear-gradient(120deg,transparent 20%,#000);-webkit-mask-size:56px 100px,100% 100%;-webkit-mask-composite:source-in;mask-image:var(--hex),linear-gradient(120deg,transparent 20%,#000);mask-size:56px 100px,100% 100%;mask-composite:intersect}
+.heroband>*{position:relative}.heroband .lead{color:rgba(255,255,255,.92)}.heroband .eyebrow{color:#FFE2D6}
+h1 em{font-style:normal;color:#FFE08A}
+.banner{display:inline-flex;gap:10px;align-items:center;padding:10px 16px;border-radius:14px;font-weight:700;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(6px)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.chips span{padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);font-size:.8rem;font-weight:600}
+#lab{color:var(--ink)}
+.kpis{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:18px}
+.kpi{background:rgba(255,255,255,.94);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:16px;padding:14px 16px;box-shadow:0 12px 26px -22px var(--c)}
+.kpi small{display:block;color:var(--mut);font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em}.kpi b{font-size:1.75rem;letter-spacing:-.02em}.kpi span{display:block;color:var(--mut);font-size:.82rem}
+.g2{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-bottom:18px}
+.cv{position:relative;height:260px}.cv.t{height:300px}
+.row{display:flex;gap:10px;align-items:center;padding:11px 14px;border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;margin-bottom:8px;background:#fff;cursor:pointer}
+.row:hover{background:#F6F1FB}.row div:first-child{flex:1}.row small{color:var(--mut);display:block}.row b{display:block;text-align:right}
+.pill{display:inline-block;font-size:.74rem;font-weight:800;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.High{--c:#E5484D}.Medium{--c:#F5A524}.Low{--c:#3E9BE9}
+.pill.High{background:#FADBD8;color:#9B1C20}.pill.Medium{background:#FDEBC8;color:#7A5206}.pill.Low{background:#D9E8F5;color:#1B5C94}
+.bar{height:9px;border-radius:9px;background:#EEE9F4;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:var(--c);border-radius:9px;transition:width .5s}
+details.card summary{font-weight:800;cursor:pointer;min-height:32px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:12px;border:0;font:700 .92rem inherit;font-family:inherit;color:#fff;background:var(--btn);cursor:pointer;box-shadow:0 12px 22px -14px #B03AD8}
+.btn.g{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.sm{min-height:40px;padding:0 14px;font-size:.86rem}
+.bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}.seg button{border:0;background:none;font:600 .85rem inherit;font-family:inherit;color:var(--mut);padding:0 12px;min-height:38px;border-radius:9px;cursor:pointer}.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+select,input[type=text],input[type=search],textarea{font:inherit;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}textarea{padding:10px;width:100%;font:.8rem/1.5 ui-monospace,Consolas,monospace}
+.tb{max-height:520px;overflow:auto;padding:0}table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{position:sticky;top:0;background:#F6F1FB;text-align:left;padding:9px 12px;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+td{padding:9px 12px;border-top:1px solid var(--line);white-space:nowrap}td.w{white-space:normal;min-width:130px}tbody tr{cursor:pointer}tbody tr:hover,tbody tr[aria-selected=true]{background:#F3EEFB}
+.split{display:grid;gap:18px;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}.tile{border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:8px 12px}.tile small{color:var(--mut);display:block;font-size:.76rem}.tile b{font-size:1.1rem}
+.act{background:#E3F6F2;border:1px solid #9DDBD0;border-radius:12px;padding:10px 14px;margin:10px 0}
+label.f{display:flex;justify-content:space-between;font-weight:700;margin:12px 0 4px;font-size:.9rem}label.f output{color:var(--vio);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#6A47E8;min-height:30px}
+.pre{background:#F6F1FB;border-radius:12px;padding:12px;overflow:auto;font:.8rem/1.5 ui-monospace,Consolas,monospace;max-height:340px;margin:0}
+.heat{display:grid;gap:4px;font-size:.8rem}.heat div{padding:6px 8px;border-radius:8px;text-align:center}.heat .h{font-weight:700;color:var(--mut)}
+table.s td,table.s th{padding:8px 10px;position:static;white-space:normal}.note{color:var(--mut);font-size:.85rem}
+.drop{border:2px dashed #B8A9E8;border-radius:22px;padding:34px;text-align:center;background:rgba(255,255,255,.8);transition:background .2s,border-color .2s}.drop.on{background:#F3EEFB;border-color:#6A47E8}
+.drop h2{font-size:1.3rem}.vh{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
+.mapg{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}.mapg label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.85rem}.mapg select{width:100%}
+.req{color:#E5484D}.ok2{color:#0B7A6D;font-weight:700}
+#panel{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:#fff;z-index:80;padding:calc(18px + env(safe-area-inset-top,0px)) 22px 22px;overflow:auto;box-shadow:-30px 0 60px -30px rgba(43,35,64,.5);transform:translateX(0);transition:transform .25s}
+#panel[hidden]{display:block;transform:translateX(110%);visibility:hidden}
+#busy{position:fixed;inset:0;z-index:90;background:rgba(251,248,244,.9);display:grid;place-items:center;font-weight:800;font-size:1.1rem}#busy[hidden]{display:none}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid #E7E1EE;border-top-color:#6A47E8;animation:sp 1s linear infinite;margin:0 auto 12px}@keyframes sp{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;z-index:95;font-weight:600}#toast[hidden]{display:none}
+/* sync map */
+#map{width:100%;height:auto}#map text{font-family:inherit;text-anchor:middle}
+.nd rect:not(.ring){fill:#fff;stroke:#D8D0E6;stroke-width:2;transition:fill .4s,stroke .4s}.nd .n{font-weight:800;font-size:14px;fill:#2B2340}.nd .p{font-weight:700;font-size:13px;fill:#5E5677}
+.fl{fill:none;stroke:#12A594;stroke-width:3;stroke-dasharray:6 10;stroke-linecap:round;animation:flow 1.1s linear infinite}@keyframes flow{to{stroke-dashoffset:-16}}
+#map[data-bad="1"] .pr{stroke:#E5484D;animation:none;stroke-dasharray:2 8}#map[data-bad="1"] .pn rect:not(.ring){fill:#FDE7E8;stroke:#E5484D}#map[data-bad="1"] .pn .p{fill:#B3262B}#map[data-bad="0"] .pn rect:not(.ring){stroke:#12A594}
+.ring{fill:none;stroke:#E5484D;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}#map[data-bad="1"] .ring{opacity:1;animation:ping 1.4s ease-out infinite}@keyframes ping{from{stroke-opacity:.9;transform:scale(1)}to{stroke-opacity:0;transform:scale(1.18)}}
+#verdict{border-radius:14px;padding:12px 16px;border:1px solid;margin-top:12px}#verdict.ok{background:#E3F6F2;border-color:#9DDBD0}#verdict.bad{background:#FDE7E8;border-color:#F3A9AC}#verdict h3{margin:4px 0;font-size:1.05rem}#verdict p{margin:0 0 4px}
+.ok .pill.v{background:rgba(18,165,148,.2);color:#0B7A6D}.bad .pill.v{background:rgba(229,72,77,.2);color:#B3262B}
+footer{max-width:1200px;margin:0 auto;padding:20px 4vw 40px;color:var(--mut);font-size:.85rem;border-top:1px solid var(--line)}
+@media (max-width:760px){.split{grid-template-columns:1fr}.brand span{display:none}.heroband{padding:20px}}
+@media (prefers-reduced-motion:reduce){.fl,.ring,.view,.spin{animation:none}.mesh,.bar i,#panel{transition:none}}
+
+/* ===== v3.1 refinements ===== */
+[hidden]{display:none!important}
+:root{--fh:'Sora','Segoe UI',system-ui,sans-serif;--fb:'Manrope','Segoe UI',system-ui,sans-serif;--fn:'Space Grotesk','Segoe UI',system-ui,sans-serif;--fm:'JetBrains Mono',ui-monospace,Consolas,monospace;--pad:clamp(16px,3.4vw,72px)}
+body{font-family:var(--fb);font-weight:500;font-size:15.5px;color:#2B2340}
+h1,h2,h3,.eyebrow,.brand{font-family:var(--fh)}h1{font-weight:700;letter-spacing:-.03em;font-size:clamp(2rem,4vw,3.3rem)}h2{font-weight:700;letter-spacing:-.01em}
+.kpi b,.tile b,.chip,.pill,.stat,.sevc b,.dtile b,.pstat span{font-family:var(--fn)}.kpi b{font-weight:700}
+.pre,textarea,code,kbd{font-family:var(--fm)}.note{font-weight:600;color:#5E5677}
+select,input,button{font-family:inherit}
+header{padding:9px var(--pad)}main{max-width:1720px;padding:24px var(--pad) 64px}
+.mesh{background:linear-gradient(180deg,rgba(124,92,252,.34) 0%,rgba(124,92,252,0) 38%),linear-gradient(0deg,rgba(18,165,148,.38) 0%,rgba(18,165,148,0) 40%),radial-gradient(62% 46% at 6% 2%,rgba(124,92,252,.55),transparent 72%),radial-gradient(56% 44% at 98% 0%,rgba(255,122,89,.52),transparent 72%),radial-gradient(62% 48% at 94% 100%,rgba(18,165,148,.52),transparent 72%),radial-gradient(56% 46% at 2% 100%,rgba(62,155,233,.52),transparent 72%)}
+.mesh.bad{background:linear-gradient(180deg,rgba(229,72,77,.32) 0%,rgba(229,72,77,0) 38%),linear-gradient(0deg,rgba(176,58,216,.30) 0%,rgba(176,58,216,0) 40%),radial-gradient(62% 46% at 6% 2%,rgba(229,72,77,.50),transparent 72%),radial-gradient(56% 44% at 98% 0%,rgba(255,150,60,.52),transparent 72%),radial-gradient(62% 48% at 94% 100%,rgba(242,106,75,.46),transparent 72%),radial-gradient(56% 46% at 2% 100%,rgba(176,58,216,.42),transparent 72%)}
+.pat{opacity:.62}
+.card{min-width:0}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.full{grid-column:1/-1}.tw{overflow-x:auto}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}.cv{height:clamp(240px,30vh,340px)}.cv.t{height:clamp(280px,36vh,400px)}
+.High{--c:#E5484D;--t:#FDE3E3}.Medium{--c:#F5A524;--t:#FEF1D9}.Low{--c:#3E9BE9;--t:#E3F0FB}
+/* page headers */
+#v-alerts{--a:#E5484D;--b:#F5A524}#v-explore{--a:#12A594;--b:#3E9BE9}#v-acc{--a:#7C5CFC;--b:#F26A4B}#v-data{--a:#3E9BE9;--b:#12A594}#v-api{--a:#B03AD8;--b:#F26A4B}
+.phead{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 24px;border-radius:24px;margin-bottom:18px;color:#fff;background:linear-gradient(120deg,var(--a),var(--b));box-shadow:0 24px 44px -30px var(--a)}
+.phead::before{content:"";position:absolute;inset:0;background:#fff;opacity:.22;pointer-events:none;-webkit-mask-image:var(--hex),linear-gradient(120deg,transparent 25%,#000);-webkit-mask-size:56px 100px,100% 100%;-webkit-mask-composite:source-in;mask-image:var(--hex),linear-gradient(120deg,transparent 25%,#000);mask-size:56px 100px,100% 100%;mask-composite:intersect}
+.phead>*{position:relative}.phead h2{margin:0;font-size:1.5rem;color:#fff}.phead p{margin:2px 0 0;color:rgba(255,255,255,.95);font-weight:600}
+.pico{width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.45);display:grid;place-items:center}.pico svg{width:27px;height:27px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pstat{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}.pstat span{padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.45);font-weight:700;font-size:.86rem}
+.view:not(#v-home) .card{box-shadow:inset 0 4px 0 var(--a),0 16px 36px -26px rgba(43,35,64,.55)}
+.view:not(#v-home) .card>h2:first-child::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,var(--a),var(--b));margin-right:9px}
+.ctl{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:12px 18px;margin-bottom:16px;font-weight:700}.ctl label{display:flex;gap:8px;align-items:center}
+/* alerts */
+.sevs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sevc{border:1px solid var(--line);border-left:6px solid var(--c);background:#fff;border-radius:16px;padding:10px 16px;cursor:pointer;text-align:left;color:var(--ink);transition:transform .15s,box-shadow .15s}
+.sevc small{display:block;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-size:.74rem}.sevc b{font-size:1.5rem}.sevc:hover{transform:translateY(-2px)}.sevc[aria-pressed=true]{background:var(--t);box-shadow:0 14px 26px -18px var(--c);border-color:var(--c)}
+.split{grid-template-columns:minmax(0,1.5fr) minmax(360px,1fr);align-items:start}.tb{height:min(74vh,780px)}
+#detail{position:sticky;top:84px;max-height:calc(100vh - 110px);overflow:auto}
+tbody tr.High td:first-child{box-shadow:inset 5px 0 0 #E5484D}tbody tr.Medium td:first-child{box-shadow:inset 5px 0 0 #F5A524}tbody tr.Low td:first-child{box-shadow:inset 5px 0 0 #3E9BE9}
+tbody tr:nth-child(even){background:rgba(246,241,251,.55)}th{background:linear-gradient(180deg,#F3EEFB,#ECE5FA);color:#4A3F6B}
+.stb{display:inline-block;padding:2px 10px;border-radius:999px;font:700 .74rem var(--fn);background:#E6DEFF;color:#5B38D6}.stb.Acknowledged{background:#FEF1D9;color:#8A5A12}.stb.Resolved{background:#D3F3EE;color:#0B7A6D}.stb.FP{background:#ECE9F1;color:#5E5677}
+.dh{border-left:6px solid var(--c);background:linear-gradient(120deg,var(--t),#fff);border-radius:14px;padding:12px 16px;margin-bottom:10px}.dh b{font-family:var(--fh);font-size:1.05rem}
+.kb{display:inline-flex;gap:6px;align-items:center;font-weight:700;font-size:.82rem;color:#4A3F6B;margin-left:auto}.kb kbd{background:#fff;border:1px solid #CFC7DE;border-bottom-width:3px;border-radius:7px;padding:1px 8px;font-size:.76rem;font-weight:600}
+/* explore */
+.off{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:14px;cursor:pointer;border:1px solid transparent}.off:hover{background:#F3EEFB;border-color:var(--line)}
+.rank{min-width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;font:700 .9rem var(--fn);background:linear-gradient(135deg,var(--a),var(--b))}.ob{flex:1;min-width:0}.ob .bar{margin:6px 0 0}.ob small{color:var(--mut);font-weight:600}.offv{font:700 1rem var(--fn);text-align:right}
+/* data */
+.dt{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.dtile{border-radius:14px;padding:12px 14px;background:var(--t);border:1px solid var(--line);border-left:5px solid var(--c)}.dtile small{color:#5E5677;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}.dtile b{display:block;font-size:1.35rem;overflow-wrap:anywhere}
+.drop{border:2px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(120deg,#3E9BE9,#12A594,#7C5CFC) border-box;box-shadow:0 22px 44px -32px #3E9BE9}.drop.on{background:linear-gradient(#F3EEFB,#F3EEFB) padding-box,linear-gradient(120deg,#3E9BE9,#12A594,#7C5CFC) border-box}
+.dico{width:64px;height:64px;border-radius:20px;margin:0 auto 10px;display:grid;place-items:center;background:linear-gradient(135deg,#3E9BE9,#12A594)}.dico svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* api */
+.m{font:600 .74rem var(--fm);padding:3px 9px;border-radius:7px}.m.get{background:#D3F3EE;color:#0B7A6D}.m.post{background:#E6DEFF;color:#5B38D6}
+.gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.gl div{padding:12px 16px;border-radius:14px;border-left:5px solid var(--c);background:var(--t)}.gl b{display:block;font-family:var(--fh);margin-bottom:2px}
+/* footer + toast */
+footer{max-width:none;margin:0;padding:24px var(--pad) 40px;color:#3F3560;font-weight:600;font-size:.9rem;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.82));border-top:1px solid var(--line);display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-between}
+footer b{font-family:var(--fh);color:#2B2340}
+#toast{left:auto;right:20px;top:calc(76px + env(safe-area-inset-top,0px));bottom:auto;transform:none;max-width:min(400px,calc(100vw - 32px));background:#fff;color:#2B2340;border:1px solid var(--line);border-left:5px solid #12A594;border-radius:14px;padding:12px 16px;box-shadow:0 20px 44px -22px rgba(43,35,64,.6);font-weight:700;font-size:.9rem}
+@media (max-width:980px){.g2{grid-template-columns:1fr}.gl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.split{grid-template-columns:1fr}#detail{position:static;max-height:none}.tb{height:420px}.kb{display:none}}
+@media (max-width:760px){header{gap:6px 10px}#tabs{order:3;flex:1 0 100%}.gl{grid-template-columns:1fr}.phead{padding:14px 16px}.pstat{margin-left:0}.pico{width:44px;height:44px}.chip#gear{padding:0 10px}#dname{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.heroband{padding:18px}.kpis{grid-template-columns:repeat(2,1fr)}.sevs{grid-template-columns:repeat(2,1fr)}.card{padding:16px}}
+@media (min-width:1500px){.kpis{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body data-state="ok">
+<div class="wall" aria-hidden="true"><div class="mesh"></div><div class="mesh bad"></div><div class="pat"></div></div>
+<a class="skip" href="#main">Skip to content</a>
+<header>
+<div class="brand"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4A261"/><stop offset="1" stop-color="#7C5CFC"/></linearGradient></defs><path d="M32 4 55 12v18c0 15-10 25-23 30C19 55 9 45 9 30V12z" fill="url(#lg)"/><path d="M21 31a11 11 0 0 1 20-7M43 33a11 11 0 0 1-20 7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg><span>SyncGuard AI</span></div>
+<nav id="tabs" role="tablist" aria-label="Sections"></nav>
+<button class="chip" id="dchip" title="Change dataset"><i></i><span id="dname">Loading…</span></button>
+<button class="chip" id="gear" aria-label="Detection settings">⚙ Settings</button>
+</header>
+<aside id="panel" hidden aria-label="Detection settings">
+<div class="bar2" style="justify-content:space-between"><h2 style="margin:0">Detection settings</h2><button class="btn g sm" id="pclose" aria-label="Close settings">Close</button></div>
+<p class="note">Changes apply instantly to every chart and table.</p>
+<label class="f" for="sens">Sensitivity <output id="sensO"></output></label><input id="sens" type="range" min="0.25" max="3" step="0.05" value="1">
+<div class="seg" id="lvl"><button data-s=".5">Fewer</button><button data-s="1">Balanced</button><button data-s="2">More</button></div>
+<label class="f" style="margin-top:18px"><span><input type="checkbox" id="rules" checked> Safety rules</span></label>
+<label class="f" for="rp">Flag price gaps over <output id="rpO"></output></label><input id="rp" type="range" min="5" max="50" value="15">
+<label class="f" for="rs">Flag syncs older than <output id="rsO"></output></label><input id="rs" type="range" min="15" max="600" value="60">
+<label class="f" style="margin-top:14px"><span><input type="checkbox" id="sup" checked> Don’t re-alert on recovery</span></label>
+<p class="note">After a problem, the next sync (values snapping back) can look like a sudden change. This skips those.</p>
+<label class="f" for="cur">Currency</label><select id="cur"><option>$</option><option>€</option><option>£</option><option>₹</option><option>¥</option></select>
+<label class="f" for="exp">Hours an error stays live <output id="expO"></output></label><input id="exp" type="range" min="1" max="72" value="6">
+<label class="f" for="osc">Cost of an oversold unit <output id="oscO"></output></label><input id="osc" type="range" min="10" max="100" value="50">
+<div class="bar2" style="margin-top:16px"><button class="btn g sm" id="reset">Reset to defaults</button></div>
+</aside>
+<main id="main">
+<section class="view" id="v-home">
+<div class="heroband">
+<div><span class="eyebrow">Pricing &amp; inventory sync monitoring</span><h1>Catch sync errors <em>before customers do.</em></h1><p class="lead">Works with your own data: upload a CSV and SyncGuard learns what normal syncing looks like, then flags what isn’t.</p><div id="banner" class="banner"></div><div class="chips" id="dchips"></div>
+<div class="bar2" style="margin-top:18px"><button class="btn g sm" data-go="data">Use my own data</button><button class="btn g sm" data-go="alerts">Review alerts</button></div></div>
+<div class="card" id="lab"><h2>Scenario lab <span class="note">scored by the real engine</span></h2>
+<div class="bar2"><input type="text" id="lsku" list="skus" aria-label="Product" placeholder="Product"><select id="lch" aria-label="Channel"></select></div><datalist id="skus"></datalist>
+<div id="mapbox"></div>
+<label class="f" for="lp">Price change <output id="lpO"></output></label><input id="lp" type="range" min="-95" max="100" value="0">
+<label class="f" for="lm">Minutes since last sync <output id="lmO"></output></label><input id="lm" type="range" min="0" max="300" value="5">
+<div id="lstockw"><label class="f" for="ls">Stock change <output id="lsO"></output></label><input id="ls" type="range" min="-100" max="200" value="0"></div>
+<div class="bar2" style="margin-top:10px" id="presets"></div><div id="verdict" role="status" aria-live="polite"></div></div>
+</div>
+<div class="kpis" id="kpis"></div>
+<div class="g2"><div class="card"><h2>Fix these first</h2><div id="top5"></div></div><div class="card"><h2>Channel health</h2><div id="health"></div></div></div>
+<div class="card" style="margin-bottom:18px"><h2>Problems over time</h2><div class="cv t"><canvas id="c-trend"></canvas></div></div>
+<details class="card" id="more"><summary>More charts</summary>
+<div class="g2" style="margin:14px 0 0"><div><h2>Urgency mix</h2><div class="cv"><canvas id="c-sev"></canvas></div></div><div><h2>Problems by type</h2><div class="cv"><canvas id="c-type"></canvas></div></div></div>
+<h2 style="margin-top:16px">Hot spots <span class="note">top 10 products, problems per channel</span></h2><div class="heat" id="heat"></div></details>
+</section>
+
+<section class="view" id="v-alerts" hidden>
+<div class="phead"><div class="pico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg></div><div><h2>Alerts</h2><p>Review each problem, see why it was flagged, and track your progress.</p></div><div class="pstat" id="ps-alerts"></div></div>
+<div class="sevs" id="sevs"></div>
+<div class="bar2"><div class="seg" id="stseg"><button data-v="todo">To review</button><button data-v="done">Done</button><button data-v="all">All</button></div><select id="ftype" aria-label="Type"></select><select id="fsort" aria-label="Sort"><option value="u">Most urgent</option><option value="m">Most money</option><option value="n">Newest</option></select><input id="fq" type="search" placeholder="Search product" aria-label="Search product"><button class="btn g sm" id="ackall">Mark urgent as seen</button><button class="btn g sm" id="csv">Copy CSV</button><span class="kb"><kbd>↑</kbd><kbd>↓</kbd> to move</span></div>
+<div id="csvbox" hidden><textarea id="csvta" rows="5" aria-label="CSV text"></textarea></div>
+<div class="split"><div class="card tb"><table id="tbl"><thead><tr><th>Urgency</th><th>Status</th><th>When</th><th>Product</th><th>Channel</th><th>What’s wrong</th><th>At risk</th></tr></thead><tbody></tbody></table></div><div class="card" id="detail"></div></div>
+</section>
+
+<section class="view" id="v-explore" hidden>
+<div class="phead"><div class="pico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-7"/></svg></div><div><h2>Explore</h2><p>Dive into any product’s price, stock and sync history across channels.</p></div><div class="pstat" id="ps-explore"></div></div>
+<div class="card ctl"><label>Product <input type="text" id="xsku" list="skus" style="width:150px"></label><label>Channel <select id="xch"></select></label><label>From <input type="range" id="xr0" min="0" max="30" value="0" style="width:120px"></label><label>To <input type="range" id="xr1" min="0" max="30" value="30" style="width:120px"></label><span class="note" id="xrange"></span></div>
+<div class="kpis" id="xk"></div>
+<div class="card" style="margin-bottom:18px"><h2>Price <span class="note">red dots = flagged, dotted = master</span></h2><div class="cv t"><canvas id="x-price"></canvas></div></div>
+<div class="g2"><div class="card" id="xstockc"><h2>Stock</h2><div class="cv"><canvas id="x-stock"></canvas></div></div><div class="card"><h2>Same product on every channel</h2><div class="cv"><canvas id="x-cross"></canvas></div></div></div>
+<div class="card"><h2>Top offenders <span class="note">click a product to explore it</span></h2><div id="offs"></div></div>
+</section>
+
+<section class="view" id="v-acc" hidden>
+<div class="phead"><div class="pico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div><div><h2>Accuracy</h2><p>How good is the detector at finding real problems, and what does it trade off?</p></div><div class="pstat" id="ps-acc"></div></div>
+<div class="kpis" id="akpis"></div>
+<div class="bar2"><div class="seg" id="aseg"><button data-v="a1">Live results</button><button data-v="a2" id="pyb">Python study (sample)</button></div></div>
+<div id="a1" class="g2"><div class="card"><h2 id="a1t">Alert level trade-off</h2><div class="cv"><canvas id="c-sweep"></canvas></div></div><div class="card"><h2>Score distribution <span class="note">how unusual each sync is</span></h2><div class="cv"><canvas id="c-dist"></canvas></div></div><div class="card full" id="confc"><h2>Hits &amp; misses</h2><div id="conf"></div></div></div>
+<div id="a2" hidden><div class="g2"><div class="card full"><h2>Held-out comparison <span class="note">AI vs traditional rules</span></h2><div class="tw"><table class="s" id="cmp"></table></div></div><div class="card"><h2>Recall by type of error</h2><div class="cv"><canvas id="c-rec"></canvas></div></div><div class="card"><h2>Model designs <span class="note">F1 on held-out data</span></h2><div class="cv"><canvas id="c-arch"></canvas></div></div><div class="card full"><h2>How the alert line is chosen</h2><div class="tw"><table class="s" id="thr"></table></div></div><div class="card"><h2>Why false alarms happen</h2><div id="fp"></div></div><div class="card"><h2>Recovery suppression</h2><div class="tw"><table class="s" id="rec"></table></div></div></div></div>
+</section>
+
+<section class="view" id="v-data" hidden>
+<div class="phead"><div class="pico"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div><div><h2>Data</h2><p>Bring any sync log. It is matched, cleaned and analyzed right in your browser.</p></div><div class="pstat" id="ps-data"></div></div>
+<div class="drop" id="drop" style="border-radius:24px;padding:34px;text-align:center"><div class="dico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div><h2 style="font-size:1.3rem">Bring your own data</h2><p class="note">Drop a CSV here (comma, semicolon or tab separated). Nothing is uploaded; everything stays in your browser.</p><div class="bar2" style="justify-content:center;margin:0"><label class="btn" for="file" tabindex="0">Choose a CSV file</label><input class="vh" type="file" id="file" accept=".csv,.tsv,.txt"><button class="btn g" id="usesample">Use the sample data</button></div></div>
+<div class="card" id="mapcard" hidden style="margin-top:18px"><h2>Match your columns <span class="note" id="mapnote"></span></h2><div class="mapg" id="mapg"></div><div class="bar2" style="margin-top:16px"><button class="btn" id="analyze">Analyze dataset</button><span class="note"><span class="req">*</span> required. Optional columns unlock more checks.</span></div></div>
+<div class="g2" style="margin-top:18px"><div class="card"><h2>Dataset profile</h2><div id="prof"></div></div><div class="card"><h2>Cleaning report</h2><div id="qual"></div></div></div>
+<details class="card"><summary>What columns does SyncGuard need?</summary><div class="tw"><table class="s"><tr><th>Column</th><th>Needed?</th><th>Unlocks</th></tr><tr><td>Timestamp, product, channel</td><td>Required</td><td>Per-product history</td></tr><tr><td>Master price, channel price</td><td>Required</td><td>Price gaps, decimal slips, sudden jumps</td></tr><tr><td>Master stock, channel stock</td><td>Optional</td><td>Stock drift and jumps</td></tr><tr><td>Units sold</td><td>Optional</td><td>Oversell risk</td></tr><tr><td>Minutes since sync</td><td>Optional</td><td>Stale-sync detection</td></tr><tr><td>Real-error label (0/1)</td><td>Optional</td><td>Live accuracy measurement</td></tr></table></div></details>
+</section>
+
+<section class="view" id="v-api" hidden>
+<div class="phead"><div class="pico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/></svg></div><div><h2>API &amp; Help</h2><p>Use the detector from other software, or look up any term.</p></div><div class="pstat"><span>FastAPI</span><span>6 endpoints</span></div></div>
+<div class="g2"><div class="card"><h2>Detection API</h2><div class="tw"><table class="s"><tr><th>Method</th><th>Path</th><th>Purpose</th></tr><tr><td><span class="m get">GET</span></td><td><code>/health</code></td><td>Service and model status</td></tr><tr><td><span class="m get">GET</span></td><td><code>/model/info</code></td><td>Model design and threshold</td></tr><tr><td><span class="m get">GET</span></td><td><code>/thresholds</code></td><td>All threshold methods</td></tr><tr><td><span class="m get">GET</span></td><td><code>/metrics</code></td><td>Held-out evaluation</td></tr><tr><td><span class="m post">POST</span></td><td><code>/score</code></td><td>Score one record</td></tr><tr><td><span class="m post">POST</span></td><td><code>/score/batch</code></td><td>Score up to 5,000</td></tr></table></div><p class="note">Run the Python service with <code>uvicorn api:app --reload</code>, then open <code>/docs</code>.</p></div>
+<div class="card"><h2>Score a record <span class="note">runs in your browser, same response shape</span></h2><div class="bar2"><select id="aex" aria-label="Example"></select><button class="btn sm" id="ascore">Score</button></div><textarea id="areq" rows="11" aria-label="Request JSON"></textarea><h3 style="margin:12px 0 6px">Response</h3><pre class="pre" id="ares"></pre></div></div>
+<div class="card"><h2>Plain-English glossary</h2><div class="gl">
+<div style="--c:#3E9BE9;--t:#E3F0FB"><b>Sync</b>A moment when a sales channel is updated from the master system.</div>
+<div style="--c:#E5484D;--t:#FDE3E3"><b>Urgency</b>Urgent, Soon or Low: how far from normal a sync is.</div>
+<div style="--c:#F5A524;--t:#FEF1D9"><b>Stale sync</b>A channel that hasn’t updated for far too long.</div>
+<div style="--c:#B03AD8;--t:#F3E3FA"><b>Oversell risk</b>A channel is selling faster than the stock it shows.</div>
+<div style="--c:#12A594;--t:#DDF4F0"><b>Precision / Recall</b>Of the alerts raised, how many were real; of the real problems, how many were found.</div>
+<div style="--c:#7C5CFC;--t:#ECE6FF"><b>Autoencoder</b>A small neural network trained to rebuild normal syncs. Syncs it can’t rebuild are flagged.</div></div></div>
+</section>
+</main>
+<footer><span><b>SyncGuard AI</b> · Team 14</span><span>The detector runs entirely in your browser: a small autoencoder trained on your data, plus safety rules.</span><span>The full Python app (Streamlit + FastAPI) is in the project zip.</span></footer>
+<div id="busy" hidden><div style="text-align:center"><div class="spin"></div><b id="busyt">Analyzing…</b><div class="bar" style="width:260px;margin:12px auto 0"><i id="busyb" style="width:8%;background:linear-gradient(90deg,#E5522F,#6A47E8)"></i></div></div></div><div id="toast" hidden></div>
+<script type="text/plain" id="sample">__SAMPLE__</script>
+<script>/*ENGINE*/</script>
+<script>
+const STATIC=__STATIC__,MODEL=__MODEL__;
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const TY=['Decimal / entry error','Price mismatch','Stale sync','Oversell risk','Stock drift','Unusual pattern'];
+const ACT=['Pause the listing on this channel and re-push the master price immediately.','Check the channel’s price rules and the last price-feed job; re-sync the price.','Check the integration job and API limits; trigger a manual sync.','Lower or zero the channel’s available stock and re-sync inventory now.','Reconcile channel stock against the ERP and fix the allocation rule.','Review the SKU manually and compare recent syncs for this channel.'];
+const SC={High:'#E5484D',Medium:'#F5A524',Low:'#3E9BE9'},U={High:'Urgent',Medium:'Soon',Low:'Low'},DEF={sens:1,rules:true,rp:15,rs:60,sup:true,cur:'$',exp:6,osc:50};
+let S={...DEF},DS=null,cur=[],tab='home',sel=null,pend=null,flt={st:'todo',ty:'',q:'',so:'u',sv:'all'},ST={};
+try{ST=JSON.parse(localStorage.getItem('sg_st3')||'{}')}catch(e){}
+const saveST=()=>{try{localStorage.setItem('sg_st3',JSON.stringify(ST))}catch(e){}},sk=o=>DS.id+':'+o.i,stOf=o=>(ST[sk(o)]||['New',''])[0];
+const money=v=>S.cur+Math.round(v).toLocaleString('en'),price=v=>S.cur+Number(v).toFixed(2),pct=v=>(v*100).toFixed(0)+'%';
+const fday=d=>new Date(DS.T0+d*864e5).toLocaleDateString('en',{month:'short',day:'numeric',timeZone:'UTC'}),fts=t=>new Date(t).toLocaleString('en',{month:'short',day:'numeric',hour:'numeric',timeZone:'UTC'});
+const toast=m=>{const t=$('#toast');t.textContent='✓  '+m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,3200);};
+const busy=(on,m,p)=>{$('#busy').hidden=!on;if(m)$('#busyt').textContent=m;$('#busyb').style.width=(p==null?8:Math.round(p*100))+'%';};
+if(window.Chart){Chart.defaults.font.family="'Manrope','Segoe UI',sans-serif";Chart.defaults.font.weight=600;Chart.defaults.color='#5E5677';Chart.defaults.borderColor='#EEE9F4';Chart.defaults.plugins.legend.labels.usePointStyle=true;}
+const CHT={};function mk(id,cfg){const c=document.getElementById(id);if(!c)return;if(!window.Chart){c.parentElement.textContent='Charts need an internet connection to load.';return;}CHT[id]?.destroy();cfg.options=Object.assign({responsive:true,maintainAspectRatio:false},cfg.options);CHT[id]=new Chart(c,cfg);}
+// ---------- dataset ----------
+function build(C,F,fit,name,stat){const R=C.R,n=R.length,rng={},last={};R.forEach((r,i)=>{const k=r.s+'|'+r.c;if(!rng[k])rng[k]=[i,i+1];else rng[k][1]=i+1;last[k]=i;});
+ let t0=Infinity,t1=-Infinity;R.forEach(r=>{if(r.t<t0)t0=r.t;if(r.t>t1)t1=r.t;});const T0=Math.floor(t0/864e5)*864e5,days=Math.max(1,Math.ceil((t1-T0)/864e5));
+ const fl=[];for(let i=0;i<n;i++)if(fit.ratio[i]>=1)fl.push(fit.ratio[i]);const sev={h:SG.pctl(fl.length?fl:[1],80),m:SG.pctl(fl.length?fl:[1],45)};
+ const cnt=new Map();R.forEach(r=>cnt.set(r.s,(cnt.get(r.s)||0)+1));
+ return{C,F,fit,n,rng,last,T0,days,sev,name,stat,id:name+':'+n,skuIdx:new Map(C.sku.map((s,i)=>[s,i])),P:C.has.label?R.reduce((t,r)=>t+(r.y>0?1:0),0):0,sdi:F.names.indexOf('stock_diff')};}
+function rowInfo(r,pd,sdv){const h=DS.C.has;let ty=5;if(pd<-.8)ty=0;else if(Math.abs(pd)>S.rp/100)ty=1;else if(h.delay&&r.sd>S.rs)ty=2;else if(h.stock&&r.cs<=5)ty=3;else if(h.stock&&Math.abs(sdv)>.25)ty=4;
+ const un=Math.max(h.units?r.us:1,1)*S.exp,gap=Math.abs(pd)*r.mp,nc=DS.C.ch.length;
+ const im=[gap*un,gap*un,un*r.mp*.05,un*r.mp*S.osc/100,h.stock?Math.abs(r.cs-r.ms/nc)*r.mp*.1:0,un*r.mp*.02][ty];return{ty,im};}
+function compute(sens=S.sens){const{C,F,fit,n}=DS,m=F.m,R=C.R,out=[],raw=new Uint8Array(n),ci=['price_change','stock_change'].map(x=>F.names.indexOf(x)).filter(x=>x>=0);
+ for(let i=0;i<n;i++)raw[i]=fit.ratio[i]*sens>=1?1:0;
+ for(let i=0;i<n;i++){let ae=raw[i]===1;if(ae&&S.sup&&i>0&&raw[i-1]&&R[i-1].s===R[i].s&&R[i-1].c===R[i].c){let top=0;for(let j=1;j<m;j++)if(fit.En[i*m+j]>fit.En[i*m+top])top=j;if(ci.includes(top))ae=false;}
+  const r=R[i],pd=F.X[i*m],rf=S.rules&&(Math.abs(pd)>S.rp/100||(C.has.delay&&r.sd>S.rs));if(!ae&&!rf)continue;
+  const ra=fit.ratio[i],info=rowInfo(r,pd,DS.sdi>=0?F.X[i*m+DS.sdi]:0);
+  out.push({i,r,ae,rf,ra,sev:ae?(ra>=DS.sev.h?'High':ra>=DS.sev.m?'Medium':'Low'):'Medium',src:ae&&rf?'Both':ae?'Model':'Rule',ty:info.ty,im:info.im,pd});}
+ return out.sort((a,b)=>(b.ra*(b.ae?1:.001))-(a.ra*(a.ae?1:.001)));}
+function metrics(L){const tp=L.filter(o=>o.r.y>0).length,p=L.length?tp/L.length:0,r=DS.P?tp/DS.P:0;return{p,r,f:p+r?2*p*r/(p+r):0,miss:DS.P-tp,tp,fp:L.length-tp,n:L.length};}
+function describe(r,ty,pd){const ch=DS.C.ch[r.c],s=DS.C.sku[r.s];
+ if(ty<2)return `${ch} shows ${price(r.cp)} for ${s}, but the master price is ${price(r.mp)}. That is about ${Math.round(Math.abs(r.cp/r.mp-1)*100)}% away.`;
+ if(ty===2)return `${ch} hasn’t synced ${s} for ${Math.round(r.sd)} minutes.`;if(ty===3)return `${ch} has only ${r.cs} units of ${s} left while it keeps selling, so it may oversell.`;
+ if(ty===4)return `${ch} lists ${r.cs} units of ${s}, which doesn’t match the master stock.`;return `The latest sync of ${s} on ${ch} looks unusual compared with its normal pattern.`;}
+// ---------- loading ----------
+function analyze(p,name,map){const T=performance.now();busy(true,'Reading '+p.rows.length.toLocaleString()+' syncs…',.05);setTimeout(async()=>{try{
+ if(p.rows.length>500000)p.rows.length=500000;const C=SG.clean(p.head,p.rows,map);if(C.R.length<50)throw new Error('Only '+C.R.length+' usable rows. Check the column matching.');
+ const F=SG.features(C),isS=name==='Sample data';let fit;
+ if(isS)fit=SG.apply(F,MODEL,MODEL.thr);else fit=await SG.fitAsync(F,{ep:40,ep1:20},pr=>busy(true,'Learning what normal looks like… '+Math.round(pr*100)+'%',pr));
+ DS=build(C,F,fit,name,isS);sel=null;afterLoad();window.__ms=Math.round(performance.now()-T);goto(tab==='data'?'home':tab);toast(`Analyzed ${C.R.length.toLocaleString()} syncs from ${name} in ${(window.__ms/1000).toFixed(1)}s.`);}
+ catch(e){toast(e.message||'Could not analyze this file.');console.error(e);}busy(false);},40);}
+function loadSample(){const t=$('#sample').textContent.trim(),p=SG.parseCSV(t);analyze(p,'Sample data',SG.guess(p.head));}
+function afterLoad(){cur=compute();const C=DS.C;$('#dname').textContent=DS.name;
+ const dl=C.sku.map(s=>`<option value="${s}">`).join('');$('#skus').innerHTML=dl.length>2e5?'':dl;
+ const top=[...new Set(cur.map(o=>o.r.s))].slice(0,1)[0]??0;$('#lsku').value=C.sku[top];$('#xsku').value=C.sku[top];
+ const co=C.ch.map((c,i)=>`<option value="${i}">${c}</option>`).join('');$('#lch').innerHTML=co;$('#xch').innerHTML=co;
+ $('#xr0').max=$('#xr1').max=DS.days;$('#xr0').value=0;$('#xr1').value=DS.days;
+ $('#lm').max=Math.max(300,Math.ceil(SG.pctl(C.R.map(r=>r.sd||0),95)*4/10)*10);$('#lstockw').hidden=!C.has.stock;
+ $('#pyb').hidden=!DS.stat;if(!DS.stat&&!$('#a2').hidden){$('#a2').hidden=true;$('#a1').hidden=false;}
+ const rep=C.rep,has=C.has,dt=a=>new Date(a).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+ $('#dchips').innerHTML=`<span>${DS.n.toLocaleString()} syncs</span><span>${C.sku.length.toLocaleString()} products</span><span>${C.ch.length} channels</span><span>${dt(DS.T0)} – ${dt(DS.T0+DS.days*864e5)}</span>`;
+ const TN={'#3E9BE9':'#E3F0FB','#12A594':'#DDF4F0','#7C5CFC':'#ECE6FF','#F5A524':'#FEF1D9','#E5484D':'#FDE3E3','#B03AD8':'#F3E3FA'},tl=(l,v,c)=>`<div class="dtile" style="--c:${c};--t:${TN[c]}"><small>${l}</small><b>${v}</b></div>`;
+ const f=Object.entries(rep.filled).reduce((t,[,v])=>t+v,0);
+ $('#prof').innerHTML='<div class="dt">'+tl('Syncs',DS.n.toLocaleString(),'#7C5CFC')+tl('Products',C.sku.length.toLocaleString(),'#3E9BE9')+tl('Channels',C.ch.length,'#12A594')+tl('Real-error labels',has.label?'Yes':'No',has.label?'#12A594':'#F5A524')+'</div><p style="margin:14px 0 6px"><b>Channels:</b> '+C.ch.join(', ')+'</p><p style="margin:0 0 6px"><b>Checks enabled:</b> Price ✓ '+(has.stock?'· Stock ✓ ':'· Stock ✗ ')+(has.units?'· Oversell ✓ ':'· Oversell ✗ ')+(has.delay?'· Stale sync ✓':'· Stale sync ✗')+'</p><p style="margin:0"><b>Learned from:</b> '+DS.F.names.map(n=>SG.FL[n]).join(', ')+'</p>';
+ $('#qual').innerHTML='<div class="dt">'+tl('Rows in',rep.rows_in.toLocaleString(),'#3E9BE9')+tl('Dropped',rep.unusable.toLocaleString(),'#E5484D')+tl('Duplicates',rep.duplicates.toLocaleString(),'#F5A524')+tl('Fixed values',rep.invalid.toLocaleString(),'#B03AD8')+tl('Gaps filled',f.toLocaleString(),'#7C5CFC')+tl('Rows used',rep.rows_out.toLocaleString(),'#12A594')+'</div>';
+ drawApiEx();}
+// ---------- scenario lab ----------
+const PRE=[['Normal',0,5,0],['Price typo',-90,5,0],['Stale sync',0,240,0],['Stock wiped',0,5,-99]];
+function lab(){if(!DS)return;const C=DS.C,sName=$('#lsku').value,si=DS.skuIdx.has(sName)?DS.skuIdx.get(sName):0,ci=+$('#lch').value||0,bi=DS.last[si+'|'+ci];
+ if(bi==null){$('#verdict').innerHTML='No data for that product and channel.';return;}
+ const b=C.R[bi],pp=+$('#lp').value,sy=+$('#lm').value,sp=+$('#ls').value;$('#lpO').textContent=(pp>0?'+':'')+pp+'%';$('#lmO').textContent=sy+' min';$('#lsO').textContent=(sp>0?'+':'')+sp+'%';
+ const r={...b,cp:+(b.cp*(1+pp/100)).toFixed(2),cs:C.has.stock?Math.max(0,Math.round(b.cs*(1+sp/100))):b.cs,sd:C.has.delay?sy:b.sd},x=SG.fv(C,DS.F.names,r,b),sc=SG.scoreOne(DS.fit.model,x),ra=sc.r/DS.fit.thr;
+ const ae=ra*S.sens>=1,rf=S.rules&&(Math.abs(x[0])>S.rp/100||(C.has.delay&&r.sd>S.rs)),bad=ae||rf,info=rowInfo(r,x[0],DS.sdi>=0?x[DS.sdi]:0);
+ $('#lp').nextElementSibling;document.body.dataset.state=bad?'bad':'ok';
+ const prices=C.ch.map((_,k)=>{const li=DS.last[si+'|'+k];return li==null?null:(k===ci?r.cp:C.R[li].cp);}),sevn=bad?(ra>=DS.sev.h?'Urgent':ra>=DS.sev.m||!ae?'Soon':'Low'):'';
+ $('#mapbox').innerHTML=mapSvg(prices,ci,bad,b.mp);
+ $('#verdict').className=bad?'bad':'ok';$('#verdict').innerHTML=bad?`<span class="pill v">${sevn}</span><h3>${TY[info.ty]}</h3><p>${describe(r,info.ty)}</p><p><b>What to do:</b> ${ACT[info.ty]}</p><p class="note">Score ${ra.toFixed(1)}× the alert line · about ${money(info.im)} at risk</p>`:`<span class="pill v">Normal</span><h3>All clear</h3><p>This sync looks like healthy behavior (score ${ra.toFixed(2)}× the alert line). No alert would be raised.</p>`;}
+function mapSvg(pr,probe,bad,mp){const n=pr.length,H=Math.max(270,n*92),cy=H/2;let s=`<svg id="map" viewBox="0 0 520 ${H}" role="img" aria-label="Master system syncing prices to ${n} sales channels" data-bad="${bad?1:0}">`;
+ pr.forEach((p,i)=>{const y=H/(n+1)*(i+1);s+=`<path class="fl${i===probe?' pr':''}" d="M160 ${cy}C260 ${cy} 280 ${y} 380 ${y}"/>`;});
+ s+=`<g class="nd"><rect x="26" y="${cy-40}" width="134" height="80" rx="18"/><text class="n" x="93" y="${cy-6}" style="fill:#C9421F">MASTER</text><text class="p" x="93" y="${cy+18}">${price(mp)}</text></g>`;
+ pr.forEach((p,i)=>{const y=H/(n+1)*(i+1),nm=DS.C.ch[i].slice(0,13);s+=`<g class="nd${i===probe?' pn':''}"><rect x="380" y="${y-26}" width="120" height="52" rx="14"/><text class="n" x="440" y="${y-3}">${nm}</text><text class="p" x="440" y="${y+16}">${p==null?'n/a':price(p)}</text>${i===probe?`<rect class="ring" x="380" y="${y-26}" width="120" height="52" rx="14"/>`:''}</g>`;});
+ return s+'</svg>';}
+$('#presets').innerHTML=PRE.map((x,i)=>`<button class="btn g sm" data-i="${i}">${x[0]}</button>`).join('');
+$('#presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;const x=PRE[b.dataset.i];$('#lp').value=x[1];$('#lm').value=x[2];$('#ls').value=x[3];lab();};
+['lp','lm','ls','lch'].forEach(i=>$('#'+i).addEventListener('input',lab));$('#lsku').addEventListener('change',lab);
+// ---------- home ----------
+const kpi=(l,v,s,c)=>`<div class="kpi" style="--c:${c}"><small>${l}</small><b>${v}</b><span>${s}</span></div>`;
+function drawHome(){const n=cur.length,hi=cur.filter(o=>o.sev==='High').length,risk=cur.reduce((t,o)=>t+o.im,0),open=cur.filter(o=>stOf(o)==='New').length;
+ $('#banner').textContent=hi?`${hi.toLocaleString()} urgent problem${hi===1?'':'s'} need attention · about ${money(risk)} possibly at risk`:n?`${n.toLocaleString()} smaller problems to look at. Nothing urgent.`:'All clear. No problems found.';
+ $('#kpis').innerHTML=kpi('Problems found',n.toLocaleString(),`out of ${DS.n.toLocaleString()} syncs`,'#F5A524')+kpi('Urgent',hi.toLocaleString(),'fix these first','#E5484D')+kpi('Money at risk',money(risk),'rough estimate','#7C5CFC')+kpi('Still to review',open.toLocaleString(),'not looked at yet','#12A594');
+ $('#top5').innerHTML=cur.filter(o=>stOf(o)==='New').slice(0,5).map(o=>`<div class="row ${o.sev}" data-i="${o.i}"><div><b style="text-align:left">${DS.C.sku[o.r.s]} <span style="font-weight:600;color:var(--mut)">on ${DS.C.ch[o.r.c]}</span></b><small>${TY[o.ty]} · ${fts(o.r.t)}</small></div><div><b>${money(o.im)}</b><span class="pill ${o.sev}">${U[o.sev]}</span></div></div>`).join('')||'<p class="note">Nothing urgent.</p>';
+ $('#health').innerHTML=DS.C.ch.map((c,i)=>{const k=cur.filter(o=>o.r.c===i),tot=DS.C.R.filter(r=>r.c===i).length||1,h=Math.max(0,100*(1-Math.min(k.length/tot*10,1))),col=h>=80?'#12A594':h>=60?'#F5A524':'#E5484D';
+  return `<div style="margin-bottom:14px"><b>${c}</b> <span class="note">${k.length.toLocaleString()} problems · ${money(k.reduce((t,o)=>t+o.im,0))} at risk</span><div class="bar" style="--c:${col}"><i style="width:${h}%"></i></div><small class="note">${h.toFixed(0)}% healthy</small></div>`;}).join('');
+ const days=Array.from({length:DS.days+1},(_,d)=>d),by=s=>{const a=new Array(days.length).fill(0);cur.forEach(o=>{if(o.sev===s)a[Math.min(days.length-1,Math.floor((o.r.t-DS.T0)/864e5))]++;});return a;};
+ mk('c-trend',{type:'bar',data:{labels:days.map(fday),datasets:['High','Medium','Low'].map(s=>({label:U[s],data:by(s),backgroundColor:SC[s],borderRadius:4,stack:'a'}))},options:{scales:{x:{stacked:true,grid:{display:false},ticks:{maxTicksLimit:8}},y:{stacked:true}},plugins:{legend:{position:'bottom'}}}});
+ if($('#more').open)drawMore();lab();}
+function drawMore(){const sv=['High','Medium','Low'].map(s=>cur.filter(o=>o.sev===s).length);
+ mk('c-sev',{type:'doughnut',data:{labels:['Urgent','Soon','Low'],datasets:[{data:sv,backgroundColor:Object.values(SC),borderWidth:3,borderColor:'#fff'}]},options:{cutout:'64%',plugins:{legend:{position:'bottom'}}}});
+ mk('c-type',{type:'bar',data:{labels:TY,datasets:[{data:TY.map((_,t)=>cur.filter(o=>o.ty===t).length),backgroundColor:'#7C5CFC',borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{grid:{display:false}}}}});
+ const cnt={},tot={};cur.forEach(o=>{const k=o.r.s+'|'+o.r.c;cnt[k]=(cnt[k]||0)+1;tot[o.r.s]=(tot[o.r.s]||0)+1;});const sk2=Object.entries(tot).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>+x[0]),cs=DS.C.ch.slice(0,6),mx=Math.max(1,...Object.values(cnt));
+ $('#heat').style.gridTemplateColumns=`110px repeat(${cs.length},1fr)`;$('#heat').innerHTML='<div class="h"></div>'+cs.map(c=>`<div class="h">${c}</div>`).join('')+sk2.map(i=>`<div class="h">${DS.C.sku[i]}</div>`+cs.map((_,c)=>{const v=cnt[i+'|'+c]||0;return `<div style="background:rgba(229,72,77,${.08+.8*v/mx})">${v}</div>`;}).join('')).join('');}
+$('#more').addEventListener('toggle',()=>{if($('#more').open)drawMore();});
+$('#top5').onclick=e=>{const r=e.target.closest('.row');if(r){sel=+r.dataset.i;flt.st='all';pressed('#stseg','all');goto('alerts');}};
+// ---------- alerts ----------
+function filtered(noSev){const w={todo:['New','Acknowledged'],done:['Resolved','False positive'],all:['New','Acknowledged','Resolved','False positive']}[flt.st];
+ const L=cur.filter(o=>w.includes(stOf(o))&&(noSev||flt.sv==='all'||o.sev===flt.sv)&&(!flt.ty||TY[o.ty]===flt.ty)&&(!flt.q||DS.C.sku[o.r.s].toLowerCase().includes(flt.q.toLowerCase())));
+ if(flt.so==='m')L.sort((a,b)=>b.im-a.im);if(flt.so==='n')L.sort((a,b)=>b.r.t-a.r.t);return L;}
+const stb=s=>`<span class="stb ${s==='False positive'?'FP':s}">${s}</span>`;
+function drawAlerts(){const base=filtered(true),L=filtered(),cnt=k=>k==='all'?base.length:base.filter(o=>o.sev===k).length;
+ $('#sevs').innerHTML=[['all','All problems','#6A47E8','#ECE6FF'],['High','Urgent','#E5484D','#FDE3E3'],['Medium','Soon','#F5A524','#FEF1D9'],['Low','Low','#3E9BE9','#E3F0FB']].map(([k,l,c,t])=>`<button class="sevc" data-k="${k}" style="--c:${c};--t:${t}" aria-pressed="${flt.sv===k}"><small>${l}</small><b>${cnt(k).toLocaleString()}</b></button>`).join('');
+ $('#ftype').innerHTML='<option value="">All types</option>'+TY.map(t=>`<option ${t===flt.ty?'selected':''}>${t}</option>`).join('');$('#fsort').value=flt.so;
+ if(sel===null||!L.some(o=>o.i===sel))sel=L.length?L[0].i:null;
+ $('#tbl tbody').innerHTML=L.slice(0,200).map(o=>`<tr class="${o.sev}" data-i="${o.i}" ${sel===o.i?'aria-selected="true"':''}><td><span class="pill ${o.sev}">${U[o.sev]}</span></td><td>${stb(stOf(o))}</td><td>${fts(o.r.t)}</td><td><b>${DS.C.sku[o.r.s]}</b></td><td>${DS.C.ch[o.r.c]}</td><td class="w">${TY[o.ty]}</td><td><b>${money(o.im)}</b></td></tr>`).join('')||'<tr><td colspan="7" style="padding:30px;text-align:center">Nothing here. 🎉</td></tr>';
+ detail();$('#tbl tr[aria-selected]')?.scrollIntoView({block:'nearest'});}
+$('#sevs').onclick=e=>{const b=e.target.closest('.sevc');if(b){flt.sv=b.dataset.k;drawAlerts();}};
+function detail(){const o=cur.find(x=>x.i===sel),box=$('#detail');if(!o){box.innerHTML='<p class="note">Select a problem to see details.</p>';return;}const r=o.r,[s,n]=ST[sk(o)]||['New',''];
+ box.innerHTML=`<div class="dh ${o.sev}"><span class="pill ${o.sev}">${U[o.sev]}</span> <b>${TY[o.ty]}</b><p style="margin:6px 0 0">${describe(r,o.ty,o.pd)}</p></div><div class="tiles"><div class="tile" style="--c:#C9421F"><small>Price on channel</small><b>${price(r.cp)}</b></div><div class="tile" style="--c:#12A594"><small>Stock on channel</small><b>${DS.C.has.stock?r.cs:'n/a'}</b></div><div class="tile" style="--c:#3E9BE9"><small>Minutes since sync</small><b>${DS.C.has.delay?Math.round(r.sd):'n/a'}</b></div><div class="tile" style="--c:#7C5CFC"><small>Money at risk</small><b>${money(o.im)}</b></div></div>
+ <div class="act"><b>What to do:</b> ${ACT[o.ty]}</div><h2 style="margin-top:14px">Why it was flagged</h2><div class="cv" style="height:${40+DS.F.m*26}px"><canvas id="c-why"></canvas></div><p class="note">Bars past the dotted line were unusual. Found by: ${o.src} (Model = AI, Rule = safety rule).</p>
+ <label class="f" for="ss">Status</label><select id="ss">${['New','Acknowledged','Resolved','False positive'].map(x=>`<option ${x===s?'selected':''}>${x}</option>`).join('')}</select><label class="f" for="sn">Note</label><input type="text" id="sn" value="${n.replace(/"/g,'&quot;')}" style="width:100%">
+ <div class="bar2" style="margin-top:12px"><button class="btn sm" id="sv">Save status</button><button class="btn g sm" id="cpm">Copy message</button></div>`;
+ const m=DS.F.m,en=[...DS.fit.En.slice(o.i*m,o.i*m+m)];
+ mk('c-why',{type:'bar',data:{labels:DS.F.names.map(x=>SG.FL[x]),datasets:[{data:en.map(v=>Math.min(v,50)),backgroundColor:en.map(v=>v>1?'#E5484D':'#CFC7DE'),borderRadius:5}]},options:{indexAxis:'y',animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'×'+en[c.dataIndex].toFixed(1)+' normal range'}}},scales:{x:{type:'logarithmic',min:.1,grid:{color:c=>c.tick.value===1?'#7A6F92':'#EEE9F4'}},y:{grid:{display:false}}}}});
+ $('#sv').onclick=()=>{ST[sk(o)]=[$('#ss').value,$('#sn').value];saveST();drawAlerts();};
+ $('#cpm').onclick=()=>{const t=`[${U[o.sev]}] ${TY[o.ty]} on ${DS.C.ch[r.c]}\n${describe(r,o.ty)}\nAt risk: ${money(o.im)}\nFix: ${ACT[o.ty]}`;try{navigator.clipboard.writeText(t);toast('Message copied.');}catch(e){toast(t);}};}
+$('#tbl tbody').onclick=e=>{const r=e.target.closest('tr');if(r&&r.dataset.i){sel=+r.dataset.i;drawAlerts();}};
+$('#stseg').onclick=e=>{const b=e.target.closest('button');if(b){flt.st=b.dataset.v;pressed('#stseg',flt.st);drawAlerts();}};
+$('#ftype').onchange=e=>{flt.ty=e.target.value;drawAlerts();};$('#fsort').onchange=e=>{flt.so=e.target.value;drawAlerts();};$('#fq').oninput=e=>{flt.q=e.target.value;drawAlerts();};
+$('#ackall').onclick=()=>{filtered().filter(o=>o.sev==='High').forEach(o=>{ST[sk(o)]=['Acknowledged','bulk'];});saveST();drawAlerts();toast('Urgent alerts marked as seen.');};
+$('#csv').onclick=()=>{const t='product,channel,urgency,type,at_risk\n'+filtered().map(o=>[DS.C.sku[o.r.s],DS.C.ch[o.r.c],U[o.sev],TY[o.ty],Math.round(o.im)].join(',')).join('\n');$('#csvta').value=t;$('#csvbox').hidden=false;try{navigator.clipboard.writeText(t);toast('CSV copied.');}catch(e){}$('#csvta').select();};
+document.addEventListener('keydown',e=>{if(tab!=='alerts'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;const dn=e.key==='ArrowDown'||e.key==='j',up=e.key==='ArrowUp'||e.key==='k';if(!dn&&!up)return;e.preventDefault();const L=filtered(),k=L.findIndex(o=>o.i===sel);const nx=L[Math.max(0,Math.min(L.length-1,k+(dn?1:-1)))];if(nx){sel=nx.i;drawAlerts();}});
+// ---------- explore ----------
+function series(si,ci){const rg=DS.rng[si+'|'+ci];if(!rg)return null;const a=+$('#xr0').value,b=+$('#xr1').value,out={p:[],m:[],s:[],f:[]},fset=new Set(cur.map(o=>o.i));
+ for(let i=rg[0];i<rg[1];i++){const r=DS.C.R[i],x=(r.t-DS.T0)/864e5;if(x<a||x>b+1)continue;out.p.push({x,y:r.cp});out.m.push({x,y:r.mp});out.s.push({x,y:r.cs});if(fset.has(i))out.f.push(i);}
+ out.fp=out.f.map(i=>({x:(DS.C.R[i].t-DS.T0)/864e5,y:DS.C.R[i].cp}));out.fs=out.f.map(i=>({x:(DS.C.R[i].t-DS.T0)/864e5,y:DS.C.R[i].cs}));return out;}
+const xo=()=>({animation:false,scales:{x:{type:'linear',ticks:{callback:v=>fday(v),maxTicksLimit:8}}},plugins:{legend:{position:'bottom'}}});
+const gfill=(c,a)=>ctx=>{const ca=ctx.chart.chartArea;if(!ca)return 'rgba(0,0,0,0)';const g=ctx.chart.ctx.createLinearGradient(0,ca.top,0,ca.bottom);g.addColorStop(0,c+a);g.addColorStop(1,c+'00');return g;};
+const PAL=['#12A594','#7C5CFC','#F5A524','#3E9BE9','#E5484D','#B03AD8'];
+function drawExplore(){const name=$('#xsku').value,si=DS.skuIdx.has(name)?DS.skuIdx.get(name):0,ci=+$('#xch').value||0,d=series(si,ci);$('#xrange').textContent=`${fday(+$('#xr0').value)} – ${fday(+$('#xr1').value)}`;
+ const mine=cur.filter(o=>o.r.s===si&&o.r.c===ci),rg=DS.rng[si+'|'+ci],lastR=rg?DS.C.R[rg[1]-1]:null;
+ $('#xk').innerHTML=kpi('Problems here',mine.length.toLocaleString(),`${DS.C.sku[si]} on ${DS.C.ch[ci]}`,'#E5484D')+kpi('Money at risk',money(mine.reduce((t,o)=>t+o.im,0)),'rough estimate','#7C5CFC')+kpi('Latest price',lastR?price(lastR.cp):'n/a',lastR?`master ${price(lastR.mp)}`:'','#12A594')+kpi('Syncs in range',d?d.p.length.toLocaleString():'0','selected window','#3E9BE9');
+ if(d){mk('x-price',{type:'line',data:{datasets:[{label:'Channel price',data:d.p,borderColor:'#6A47E8',backgroundColor:gfill('#6A47E8','55'),fill:true,borderWidth:2,pointRadius:0,parsing:false},{label:'Master',data:d.m,borderColor:'#F26A4B',borderDash:[6,4],borderWidth:1.6,pointRadius:0,parsing:false},{label:'Flagged',data:d.fp,type:'scatter',backgroundColor:'#E5484D',borderColor:'#fff',borderWidth:2,pointRadius:5,parsing:false}]},options:xo()});
+  $('#xstockc').hidden=!DS.C.has.stock;if(DS.C.has.stock)mk('x-stock',{type:'line',data:{datasets:[{label:'Channel stock',data:d.s,borderColor:'#12A594',backgroundColor:gfill('#12A594','66'),fill:true,borderWidth:2,pointRadius:0,parsing:false},{label:'Flagged',data:d.fs,type:'scatter',backgroundColor:'#E5484D',borderColor:'#fff',borderWidth:2,pointRadius:5,parsing:false}]},options:xo()});}
+ mk('x-cross',{type:'line',data:{datasets:DS.C.ch.map((c,k)=>({label:c,data:(series(si,k)||{p:[]}).p,borderColor:PAL[k%6],borderWidth:1.8,pointRadius:0,parsing:false}))},options:xo()});
+ const agg={};cur.forEach(o=>{const a=agg[o.r.s]||(agg[o.r.s]={n:0,im:0});a.n++;a.im+=o.im;});const top=Object.entries(agg).sort((a,b)=>b[1].im-a[1].im).slice(0,8),mx=Math.max(1,...top.map(x=>x[1].im));
+ $('#offs').innerHTML=top.map(([s,a],i)=>`<div class="off" data-s="${DS.C.sku[s]}"><div class="rank">${i+1}</div><div class="ob"><b>${DS.C.sku[s]}</b> <small>${a.n} problems</small><div class="bar" style="--c:${PAL[i%6]}"><i style="width:${a.im/mx*100}%"></i></div></div><div class="offv">${money(a.im)}</div></div>`).join('')||'<p class="note">No problems to show.</p>';}
+['xsku','xch','xr0','xr1'].forEach(i=>$('#'+i).addEventListener('input',()=>tab==='explore'&&drawExplore()));
+$('#offs').onclick=e=>{const r=e.target.closest('.off');if(r){$('#xsku').value=r.dataset.s;drawExplore();scrollTo({top:0,behavior:'smooth'});}};
+// ---------- accuracy ----------
+function drawAcc(){const L=cur,m=DS.C.has.label?metrics(L):null;
+ $('#akpis').innerHTML=m?kpi('Alert accuracy',pct(m.p),'of alerts were real problems','#3E9BE9')+kpi('Catch rate',pct(m.r),'of real problems were found','#12A594')+kpi('Overall score',m.f.toFixed(2),'F1, balance of both','#F5A524')+kpi('Missed',m.miss.toLocaleString(),`of ${DS.P.toLocaleString()} real problems`,'#E5484D'):
+  kpi('Alerts raised',L.length.toLocaleString(),'at current settings','#F5A524')+kpi('Alert rate',(L.length/DS.n*100).toFixed(2)+'%','of all syncs','#3E9BE9')+kpi('Alert line',DS.fit.thr.toFixed(2),'score that triggers an alert','#7C5CFC')+kpi('Labels','none','add an is_anomaly column to measure accuracy','#12A594');
+ const sw=[.25,.4,.5,.7,1,1.4,2,3].map(s=>({s,L:compute(s)}));
+ if(m){$('#a1t').textContent='Alert level trade-off';mk('c-sweep',{type:'line',data:{labels:sw.map(x=>x.s),datasets:[['Precision','p','#3E9BE9'],['Recall','r','#12A594'],['F1','f','#F5A524']].map(([l,k,c])=>({label:l,data:sw.map(x=>metrics(x.L)[k]),borderColor:c,backgroundColor:c,tension:.3,pointRadius:3}))},options:{scales:{y:{min:0,max:1},x:{title:{display:true,text:'Sensitivity (higher = more alerts)'}}},plugins:{legend:{position:'bottom'}}}});
+  $('#confc').hidden=false;const tn=DS.n-m.tp-m.fp-m.miss;$('#conf').innerHTML=`<div class="heat" style="grid-template-columns:repeat(2,1fr)"><div style="background:#E3F6F2"><b>${tn.toLocaleString()}</b><br>normal, left alone</div><div style="background:#FDEBC8"><b>${m.fp.toLocaleString()}</b><br>false alarms</div><div style="background:#FADBD8"><b>${m.miss.toLocaleString()}</b><br>real, missed</div><div style="background:#D3F3EE"><b>${m.tp.toLocaleString()}</b><br>real, caught</div></div><p class="note">Measured on all rows of this dataset (no train/test split).</p>`;}
+ else{$('#a1t').textContent='Alerts at each sensitivity';mk('c-sweep',{type:'bar',data:{labels:sw.map(x=>'×'+x.s),datasets:[{data:sw.map(x=>x.L.length),backgroundColor:'#7C5CFC',borderRadius:6}]},options:{plugins:{legend:{display:false}}}});$('#confc').hidden=true;}
+ const bins=new Array(40).fill(0),lo=-2,hi=3;for(let i=0;i<DS.n;i++){const v=Math.log10(Math.max(DS.fit.ratio[i],1e-2));bins[Math.max(0,Math.min(39,Math.floor((v-lo)/(hi-lo)*40)))]++;}
+ const thi=Math.floor((Math.log10(1/S.sens)-lo)/(hi-lo)*40);mk('c-dist',{type:'bar',data:{labels:bins.map((_,i)=>(Math.pow(10,lo+(i+.5)*(hi-lo)/40)).toPrecision(2)),datasets:[{data:bins,backgroundColor:bins.map((_,i)=>i>=thi?'#E5484D':'#CFC7DE'),borderRadius:2}]},options:{plugins:{legend:{display:false}},scales:{y:{type:'logarithmic'},x:{ticks:{maxTicksLimit:6},title:{display:true,text:'Score ÷ alert line (right of the red = alert)'}}}}});
+ if(DS.stat)drawStatic();}
+function drawStatic(){const D=STATIC;$('#cmp').innerHTML='<tr><th>Approach</th><th>Alerts</th><th>Prec.</th><th>Recall</th><th>F1</th></tr>'+D.cmp.map(r=>`<tr><td>${r.Approach}</td><td>${r.Alerts}</td><td>${pct(r.Precision)}</td><td>${pct(r.Recall)}</td><td><b>${r.F1.toFixed(2)}</b></td></tr>`).join('');
+ const ty=Object.keys(D.types.Hybrid);mk('c-rec',{type:'bar',data:{labels:ty.map(t=>t.replace('_',' ')),datasets:[['Rules only','#D9D2E6'],['Autoencoder only','#F26A4B'],['Hybrid','#12A594']].map(([k,c])=>({label:k,data:ty.map(t=>D.types[k][t]),backgroundColor:c,borderRadius:4}))},options:{scales:{y:{max:1,ticks:{callback:v=>pct(v)}}},plugins:{legend:{position:'bottom'}}}});
+ $('#thr').innerHTML='<tr><th>Method</th><th>Alerts</th><th>Prec.</th><th>Recall</th><th>F1</th></tr>'+D.thr.map(r=>`<tr><td>${r.name}</td><td>${r.alerts}</td><td>${pct(r.precision)}</td><td>${pct(r.recall)}</td><td>${r.f1.toFixed(2)}</td></tr>`).join('');
+ mk('c-arch',{type:'bar',data:{labels:D.arch.map(a=>a.architecture),datasets:[{label:'F1',data:D.arch.map(a=>a.f1),backgroundColor:D.arch.map(a=>a.chosen?'#F26A4B':'#D9D2E6'),borderRadius:8}]},options:{scales:{y:{max:1},x:{grid:{display:false}}},plugins:{legend:{display:false}}}});
+ $('#fp').innerHTML='<ul style="margin:0;padding-left:18px">'+D.fp.map(l=>`<li>${l}</li>`).join('')+'</ul>';
+ $('#rec').innerHTML='<tr><th>Setting</th><th>Alerts</th><th>False</th><th>Prec.</th><th>F1</th></tr>'+D.rec.map(r=>`<tr><td>${r['Recovery suppression']}</td><td>${r.Alerts}</td><td>${r['False alarms']}</td><td>${pct(r.Precision)}</td><td>${r.F1.toFixed(2)}</td></tr>`).join('');}
+$('#aseg').onclick=e=>{const b=e.target.closest('button');if(b){$('#a1').hidden=b.dataset.v!=='a1';$('#a2').hidden=b.dataset.v!=='a2';pressed('#aseg',b.dataset.v);drawAcc();}};
+// ---------- api ----------
+function drawApiEx(){const C=DS.C,si=cur.length?cur[0].r.s:0,bi=DS.last[si+'|0']??0,b=C.R[bi],mk_=(o)=>({timestamp:new Date(b.t).toISOString().slice(0,19),sku:C.sku[b.s],channel:C.ch[b.c],master_price:b.mp,channel_price:b.cp,master_stock:b.ms||0,channel_stock:b.cs||0,units_sold:b.us||0,sync_delay_min:b.sd||0,...o});
+ DS.ex=[['Latest real sync',mk_({})],['Price typo (÷10)',mk_({channel_price:+(b.cp/10).toFixed(2)})],['Stale sync (5 h)',mk_({sync_delay_min:300})],['Stock wiped + rush',mk_({channel_stock:1,units_sold:(b.us||0)+20})]];
+ $('#aex').innerHTML=DS.ex.map((x,i)=>`<option value="${i}">${x[0]}</option>`).join('');$('#areq').value=JSON.stringify(DS.ex[0][1],null,2);$('#ares').textContent='Press “Score”.';}
+$('#aex').onchange=()=>{$('#areq').value=JSON.stringify(DS.ex[+$('#aex').value][1],null,2);};
+$('#ascore').onclick=()=>{try{const q=JSON.parse($('#areq').value),C=DS.C,si=C.sku.indexOf(q.sku),ci=C.ch.indexOf(q.channel);if(si<0||ci<0)throw new Error('Unknown product or channel for this dataset.');
+ const bi=DS.last[si+'|'+ci],b=C.R[bi]||{},r={t:Date.parse(q.timestamp),s:si,c:ci,mp:+q.master_price,cp:+q.channel_price,ms:+q.master_stock,cs:+q.channel_stock,us:+q.units_sold,sd:+q.sync_delay_min},x=SG.fv(C,DS.F.names,r,b),sc=SG.scoreOne(DS.fit.model,x),ra=sc.r/DS.fit.thr,
+ ae=ra*S.sens>=1,rf=S.rules&&(Math.abs(x[0])>S.rp/100||(C.has.delay&&r.sd>S.rs)),bad=ae||rf,inf=rowInfo(r,x[0],DS.sdi>=0?x[DS.sdi]:0),sv=bad?(ae?(ra>=DS.sev.h?'High':ra>=DS.sev.m?'Medium':'Low'):'Medium'):'None';
+ $('#ares').textContent=JSON.stringify({sku:q.sku,channel:q.channel,timestamp:q.timestamp,anomaly_score:+(ra*DS.fit.thr).toFixed(4),threshold:+(DS.fit.thr/S.sens).toFixed(4),is_anomaly:bad,severity:sv,likely_type:bad?TY[inf.ty]:null,reason:bad?TY[inf.ty]:null,detected_by:bad?(ae&&rf?'Both':ae?'Model':'Rule'):null,estimated_revenue_at_risk:bad?Math.round(inf.im*100)/100:0,suggested_action:bad?ACT[inf.ty]:null,feature_scores:Object.fromEntries(DS.F.names.map((n,j)=>[n,+sc.e[j].toFixed(3)]))},null,2);}catch(e){$('#ares').textContent='Error: '+e.message;}};
+// ---------- data tab ----------
+function showMap(p,map,name){pend={p,name};const opts=['<option value="-1">(none)</option>'].concat(p.head.map((h,i)=>`<option value="${i}">${h}</option>`)).join('');
+ $('#mapg').innerHTML=SG.FIELDS.map(([k,,l,rq])=>`<label>${l} ${rq?'<span class="req">*</span>':''}<select data-k="${k}">${opts}</select></label>`).join('');$$('#mapg select').forEach(s=>{const v=map[s.dataset.k];s.value=v==null?-1:v;});
+ $('#mapnote').textContent=`${p.rows.length.toLocaleString()} rows detected in ${name}. Check the matches below.`;$('#mapcard').hidden=false;}
+function readFile(f){if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const p=SG.parseCSV(String(rd.result));if(p.rows.length<2)throw new Error('That file looks empty.');showMap(p,SG.guess(p.head),f.name);}catch(e){toast(e.message);}};rd.readAsText(f);}
+$('#file').onchange=e=>readFile(e.target.files[0]);$('#usesample').onclick=loadSample;
+['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('on');}));['dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.remove('on');}));
+$('#drop').addEventListener('drop',e=>readFile(e.dataTransfer.files[0]));
+$('#analyze').onclick=()=>{const map={};$$('#mapg select').forEach(s=>{if(+s.value>=0)map[s.dataset.k]=+s.value;});const need=SG.FIELDS.filter(f=>f[3]&&map[f[0]]==null).map(f=>f[2]);if(need.length){toast('Please match: '+need.join(', '));return;}$('#mapcard').hidden=true;analyze(pend.p,pend.name,map);};
+// ---------- settings ----------
+function syncPanel(){$('#sens').value=S.sens;$('#sensO').textContent='×'+S.sens.toFixed(2);$('#rules').checked=S.rules;$('#rp').value=S.rp;$('#rpO').textContent=S.rp+'%';$('#rs').value=S.rs;$('#rsO').textContent=S.rs+' min';$('#sup').checked=S.sup;$('#cur').value=S.cur;$('#exp').value=S.exp;$('#expO').textContent=S.exp+' h';$('#osc').value=S.osc;$('#oscO').textContent=S.osc+'%';pressed('#lvl',S.sens);}
+let tmr;function changed(){syncPanel();clearTimeout(tmr);tmr=setTimeout(()=>{if(!DS)return;cur=compute();DRAW[tab]();},40);}
+$('#sens').oninput=e=>{S.sens=+e.target.value;changed();};$('#rules').onchange=e=>{S.rules=e.target.checked;changed();};$('#rp').oninput=e=>{S.rp=+e.target.value;changed();};$('#rs').oninput=e=>{S.rs=+e.target.value;changed();};$('#sup').onchange=e=>{S.sup=e.target.checked;changed();};
+$('#cur').onchange=e=>{S.cur=e.target.value;changed();};$('#exp').oninput=e=>{S.exp=+e.target.value;changed();};$('#osc').oninput=e=>{S.osc=+e.target.value;changed();};$('#reset').onclick=()=>{S={...DEF};changed();};
+$('#lvl').onclick=e=>{const b=e.target.closest('button');if(b){S.sens=+b.dataset.s;changed();}};
+$('#gear').onclick=()=>{$('#panel').hidden=!$('#panel').hidden;};$('#pclose').onclick=()=>$('#panel').hidden=true;document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#panel').hidden=true;});
+// ---------- nav ----------
+const TABS=[['home','Home'],['alerts','Alerts'],['explore','Explore'],['acc','Accuracy'],['data','Data'],['api','API & Help']],DRAW={home:drawHome,alerts:drawAlerts,explore:drawExplore,acc:drawAcc,data:()=>{},api:()=>{}};
+$('#tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" data-t="${k}">${l}</button>`).join('');
+function pressed(q,v){$$(q+' button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.v??b.dataset.s)==v));}
+function heads(){if(!DS)return;const hi=cur.filter(o=>o.sev==='High').length;$('#ps-alerts').innerHTML=`<span>${cur.length.toLocaleString()} found</span><span>${hi.toLocaleString()} urgent</span>`;$('#ps-explore').innerHTML=`<span>${DS.C.sku.length.toLocaleString()} products</span><span>${DS.C.ch.length} channels</span>`;$('#ps-acc').innerHTML=DS.C.has.label?`<span>${DS.P.toLocaleString()} labeled errors</span>`:'<span>no labels</span>';$('#ps-data').innerHTML=`<span>${DS.n.toLocaleString()} syncs</span><span>${DS.name}</span>`;}
+function goto(t){tab=t;heads();$$('.view').forEach(v=>v.hidden=v.id!=='v-'+t);$$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));if(DS)DRAW[t]();if(t!=='home')document.body.dataset.state='ok';}
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(b)goto(b.dataset.t);};$('#dchip').onclick=()=>goto('data');document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)goto(b.dataset.go);});
+pressed('#stseg','todo');pressed('#aseg','a1');syncPanel();goto('home');setTimeout(loadSample,60);
+</script>
+</body>
+</html>
