@@ -1,0 +1,28 @@
+{
+  "rows_in": 65059,
+  "unusable_rows_dropped": 0,
+  "duplicates_removed": 259,
+  "invalid_values_fixed": {
+    "channel_stock": 129,
+    "channel_price": 0,
+    "sync_delay_min": 0,
+    "units_sold": 0
+  },
+  "missing_values_filled": {
+    "master_price": 0,
+    "channel_price": 259,
+    "master_stock": 0,
+    "channel_stock": 259,
+    "units_sold": 0,
+    "sync_delay_min": 259
+  },
+  "rows_out": 64800,
+  "skus": 30,
+  "channels": [
+    "Amazon",
+    "Shopify",
+    "eBay"
+  ],
+  "date_from": "2026-01-01 00:00:00",
+  "date_to": "2026-01-30 23:00:00"
+}

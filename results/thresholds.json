@@ -1,0 +1,58 @@
+{
+  "chosen_method": "percentile",
+  "chosen": 31.383282644260728,
+  "methods": {
+    "percentile": 31.383282644260728,
+    "mean_3sd": 360.3086472398846,
+    "mad": 0.3102793950028758,
+    "iqr": 0.6098050792204361,
+    "f1_optimal": 52.57391022686964
+  },
+  "evaluation": [
+    {
+      "method": "percentile",
+      "name": "Percentile (99.6th of normal scores)",
+      "threshold": 31.383282644260728,
+      "alerts": 437,
+      "precision": 0.7597254004576659,
+      "recall": 0.9325842696629213,
+      "f1": 0.8373266078184111
+    },
+    {
+      "method": "mean_3sd",
+      "name": "Mean + 3 standard deviations",
+      "threshold": 360.3086472398846,
+      "alerts": 158,
+      "precision": 0.879746835443038,
+      "recall": 0.3904494382022472,
+      "f1": 0.5408560311284046
+    },
+    {
+      "method": "mad",
+      "name": "Median + 3 \u00d7 MAD (robust)",
+      "threshold": 0.3102793950028758,
+      "alerts": 2815,
+      "precision": 0.1261101243339254,
+      "recall": 0.9971910112359551,
+      "f1": 0.2239041311888994
+    },
+    {
+      "method": "iqr",
+      "name": "Q3 + 3 \u00d7 IQR (box-plot rule)",
+      "threshold": 0.6098050792204361,
+      "alerts": 1215,
+      "precision": 0.29218106995884774,
+      "recall": 0.9971910112359551,
+      "f1": 0.4519414385741566
+    },
+    {
+      "method": "f1_optimal",
+      "name": "Best F1 on training labels (reference only)",
+      "threshold": 52.57391022686964,
+      "alerts": 342,
+      "precision": 0.8976608187134503,
+      "recall": 0.8623595505617978,
+      "f1": 0.8796561604584527
+    }
+  ]
+}
