@@ -284,6 +284,58 @@ Then open **http://localhost:8088** in your browser.
 
 ---
 
+
+---
+
+## Exploring the Website’s Web Pages
+
+### 1. Overview & Executive Dashboard (Daylight Theme)
+![Overview & Executive Dashboard (Daylight Theme)](docs/screenshots/01_overview_light.png)
+**Description:** The primary operational dashboard provides real-time situational awareness across all connected e-commerce channels (Amazon, Shopify, eBay). The header displays the active dataset pill, global dark/light theme switch, and sensitivity calibration drawer. Top KPI cards summarize total sync incidents (1,449 detected), categorized across Urgent, Soon, and Low urgency tiers alongside model validation metrics. The "Fix these first" queue surfaces high-risk sync mismatches ranked by potential revenue impact, while channel health indicators continuously monitor active throughput and error rates per marketplace.
+
+---
+
+### 2. Overview Dashboard (High-Contrast Dark Theme)
+![Overview Dashboard (High-Contrast Dark Theme)](docs/screenshots/02_overview_dark.png)
+**Description:** A dedicated dark-mode view designed for prolonged operations room monitoring and reduced eye fatigue. The palette employs deep purple and slate backgrounds (`#0E0A1A`, `#1A1430`) with high-contrast text tokens (`#F2EEFF`), vivid card borders, and accessible chart palettes. The SVG topology and telemetry graphs automatically recalculate their fill and stroke values dynamically upon theme toggle without page reload.
+
+---
+
+### 3. Interactive Scenario Lab & Sync Topology Map
+![Interactive Scenario Lab & Sync Topology Map](docs/screenshots/03_scenario_lab_anomaly.png)
+**Description:** A sandbox environment powered by an in-browser TensorFlow.js neural network engine. The left panel allows operators to select any product SKU and simulate price/stock drift using continuous sliders or one-click failure presets (*Price typo*, *Stale sync*, *Stock wiped*). The dynamic SVG network map illustrates data flow from the central Master Store to active channels. When an anomaly is detected, the affected channel node illuminates with a deep-red alert status, a pulsing radial ping ring, and an instant "Urgent" verdict badge indicating severe reconstruction error.
+
+---
+
+### 4. Alerts Management & Root-Cause Diagnosis
+![Alerts Management & Root-Cause Diagnosis](docs/screenshots/04_alerts_management.png)
+**Description:** The operational triage workspace enables inventory teams to review, filter, and remediate flagged sync events. Features include severity filter pills (*All problems*, *High*, *Medium*, *Low*), review status toggles (*To review* vs *Done*), and instant search. Selecting any row in the alerts table opens the side-panel Detail Inspector, presenting a side-by-side price/stock divergence comparison, automated root-cause explanation, recommended next steps, and single-click review acknowledgement.
+
+---
+
+### 5. Deep-Dive Explore & Time-Series Analytics
+![Deep-Dive Explore & Time-Series Analytics](docs/screenshots/05_explore_analytics.png)
+**Description:** A granular inspection module for investigating historical product trajectories across the entire 30-day timeline. The Price Tracking chart plots the ground-truth master price against channel listings, highlighting precise anomaly moments with red scatter markers. Accompanying graphs depict inventory depletion rates and cross-channel overlays to determine whether sync drift is localized to a single marketplace or systemic across the catalog.
+
+---
+
+### 6. Model Accuracy, Calibration & Neural Architecture
+![Model Accuracy, Calibration & Neural Architecture](docs/screenshots/06_model_accuracy.png)
+**Description:** The machine learning audit interface provides full transparency into the unsupervised autoencoder's mathematical performance. Key metrics highlight an F1-Score of 0.837, Recall of 0.933, and ROC-AUC of 0.996. The Precision-Recall sweep curve illustrates false-alarm trade-offs across adjustable threshold levels, while the reconstruction error histogram verifies that normal sync events cluster tightly near zero while anomalies cleanly exceed the 31.38 cutoff line. A structural schematic diagrams the 7-layer compression bottleneck (`9 → 32 → 16 → 8 → 16 → 32 → 9`).
+
+---
+
+### 7. Data Ingestion, Profiling & Quality Audit
+![Data Ingestion, Profiling & Quality Audit](docs/screenshots/07_data_management.png)
+**Description:** The data ingestion portal supports drag-and-drop CSV uploads for custom retail feeds. The built-in parser automatically executes column mapping, data profiling, and automated quality remediation—flagging missing values, reconciling duplicate sync records, and validating schema compliance against SyncGuard's 9 expected input features.
+
+---
+
+### 8. Developer API & In-Browser Record Scorer
+![Developer API & In-Browser Record Scorer](docs/screenshots/08_api_simulation.png)
+**Description:** Comprehensive developer documentation detailing REST API endpoints (`/health`, `/score`, `/alerts`, `/retrain`). The interactive record scoring simulator allows engineers to input raw JSON payloads and test the inlined neural network client-side, returning instantaneous reconstruction scores, anomaly classifications, and severity assignments alongside a plain-English technical glossary.
+
+
 ### Milestone 6 — Conclusion
 
 SynaGuard AI demonstrates how unsupervised deep learning can be applied to retail operations monitoring without requiring labelled training data at scale. The autoencoder learns what "normal" sync behaviour looks like across price, stock, timing, and attempt signals, then flags deviations with high sensitivity.

@@ -65158,6 +65158,9 @@ const TY=['Decimal / entry error','Price mismatch','Stale sync','Oversell risk',
 const ACT=['Pause the listing on this channel and re-push the master price immediately.','Check the channel’s price rules and the last price-feed job; re-sync the price.','Check the integration job and API limits; trigger a manual sync.','Lower or zero the channel’s available stock and re-sync inventory now.','Reconcile channel stock against the ERP and fix the allocation rule.','Review the SKU manually and compare recent syncs for this channel.'];
 const SC={High:'#E5484D',Medium:'#F5A524',Low:'#3E9BE9'},U={High:'Urgent',Medium:'Soon',Low:'Low'},DEF={sens:1,rules:true,rp:15,rs:60,sup:true,cur:'$',exp:6,osc:50};
 let S={...DEF},DS=null,cur=[],tab='home',sel=null,pend=null,flt={st:'todo',ty:'',q:'',so:'u',sv:'all'},ST={};
+const _urlP=new URLSearchParams(window.location.search),_reqTab=_urlP.get('tab')||window.location.hash.slice(1),_reqTheme=_urlP.get('theme'),_reqPreset=_urlP.get('preset');
+if(_reqTheme)document.documentElement.dataset.theme=_reqTheme;
+if(_reqTab&&['home','alerts','explore','acc','data','api'].includes(_reqTab))tab=_reqTab;
 try{ST=JSON.parse(localStorage.getItem('sg_st3')||'{}')}catch(e){}
 const saveST=()=>{try{localStorage.setItem('sg_st3',JSON.stringify(ST))}catch(e){}},sk=o=>DS.id+':'+o.i,stOf=o=>(ST[sk(o)]||['New',''])[0];
 const money=v=>S.cur+Math.round(v).toLocaleString('en'),price=v=>S.cur+Number(v).toFixed(2),pct=v=>(v*100).toFixed(0)+'%';
@@ -65193,7 +65196,7 @@ function analyze(p,name,map){const T=performance.now();busy(true,'Reading '+p.ro
  if(p.rows.length>500000)p.rows.length=500000;const C=SG.clean(p.head,p.rows,map);if(C.R.length<50)throw new Error('Only '+C.R.length+' usable rows. Check the column matching.');
  const F=SG.features(C),isS=name==='Sample data';let fit;
  if(isS)fit=SG.apply(F,MODEL,MODEL.thr);else fit=await SG.fitAsync(F,{ep:40,ep1:20},pr=>busy(true,'Learning what normal looks like… '+Math.round(pr*100)+'%',pr));
- DS=build(C,F,fit,name,isS);sel=null;afterLoad();window.__ms=Math.round(performance.now()-T);goto(tab==='data'?'home':tab);toast(`Analyzed ${C.R.length.toLocaleString()} syncs from ${name} in ${(window.__ms/1000).toFixed(1)}s.`);}
+ DS=build(C,F,fit,name,isS);sel=null;afterLoad();window.__ms=Math.round(performance.now()-T);goto(_reqTab?_reqTab:(tab==='data'?'home':tab)); if(_reqPreset!=null&&typeof PRE!=='undefined'&&PRE[+_reqPreset]){const x=PRE[+_reqPreset];$('#lp').value=x[1];$('#lm').value=x[2];$('#ls').value=x[3];lab();}toast(`Analyzed ${C.R.length.toLocaleString()} syncs from ${name} in ${(window.__ms/1000).toFixed(1)}s.`);}
  catch(e){toast(e.message||'Could not analyze this file.');console.error(e);}busy(false);},40);}
 function loadSample(){const t=$('#sample').textContent.trim(),p=SG.parseCSV(t);analyze(p,'Sample data',SG.guess(p.head));}
 function afterLoad(){cur=compute();const C=DS.C;$('#dname').textContent=DS.name;
